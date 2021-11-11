@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="board">
+	<sql id="search">
+  		SELECT * FROM board
+  		<where>
+  			<if test="search == 1">
+  				b_subject LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+  			</if>
+  		
+  			<if test="search == 2">
+  				b_writer=#{keyword}
+  			</if>  			
+  			
+    	</where>
+  		ORDER BY board_id DESC
+  			
+  	</sql>
+  	
+  	<select id="total" resultType="Integer">
+  		SELECT COUNT(*)
+  		FROM (<include refid="search"></include>)
+  	</select>
+  	
+	<select id="list" resultType="Board">
+		SELECT * FROM 
+  			(SELECT ROWNUM rnum, sub.* FROM
+	           	(<include refid="search"></include>) sub)
+	    <![CDATA[       	
+	    WHERE rnum >= ((#{page} - 1) * #{perPage} + 1) AND rnum <= (#{page} * #{perPage})
+  		]]>
+  		ORDER BY board_id DESC
+	</select>
+	
+	
+	<insert id="add">
+		INSERT INTO board (board_id, b_writer, b_subject, b_content,b_date, view_cnt  ) 
+		VALUES (BOARD_SEQ.nextval, #{bWriter},	#{bSubject}, #{bContent}, SYSDATE , 0)
+		
+		<!-- INSERT INTO board 
+		VALUES (#{boardId},	#{bWriter},	#{bSubject}, #{bContent}, #{bRdate}, #{bLike}, #{bReply}, #{id})-->
+		
+	</insert>
+	
+	<select id="item" resultType="Board">
+		SELECT * FROM board
+		WHERE board_id = #{boardId}
+	</select>
+	
+	<select id="view" resultType="Board">
+		SELECT * FROM board
+		WHERE board_id = #{boardId}
+	</select>
+	
+	
+	
+	<update id="update">
+		UPDATE board
+		SET b_writer=#{bWriter}, b_subject=#{bSubject}, b_content=#{bContent}
+		WHERE board_id= #{boardId}
+		
+		<!--  UPDATE board
+		SET b_writer=#{bWriter}, b_subject=#{bSubject}, b_content=#{bContent}, b_rdate=#{bRdate}, b_like=#{bLike}, b_reply=#{bReply}, id=#{id}
+		WHERE board_id= #{boardId}-->
+		
+	</update>
+	
+	<update id="increaseViewcont">
+		UPDATE board
+		SET view_cnt = view_cnt + 1
+		WHERE board_id= #{boardId}
+	
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM board
+		WHERE board_id=#{boardId}
+	</delete>
+	
+	
+</mapper>

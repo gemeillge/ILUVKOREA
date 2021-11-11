@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="tour">
+
+	
+	<sql id="search">
+  		select * from tour
+		join area using(area_id)
+		join city using(city_id)
+		left join tour_image on tour.tour_id = tour_image.tour_id
+		
+  		<where>
+  			<if test="search == 1">
+  				tour_name LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+  			</if>
+  		
+  			<if test="search == 2">
+  				city_name LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+  			</if>  	
+  	
+    	</where>
+  		
+  			<if test="orderMode == 1">
+				ORDER BY ${order} ASC
+			</if>
+			<if test="orderMode == 2">
+				ORDER BY ${order} DESC
+			</if>
+  	</sql>
+	
+	 <select id="total" resultType="Integer">
+  		SELECT COUNT(*)
+  		FROM (<include refid="search"></include>)
+  	</select>
+	
+	<select id="list" resultMap="TourMap">
+	SELECT * FROM 
+  			(SELECT ROWNUM rnum, sub.* FROM
+	           	(<include refid="search"></include>) sub)
+	    <![CDATA[       	
+	    WHERE rnum >= ((#{page} - 1) * #{perPage} + 1) AND rnum <= (#{page} * #{perPage})
+  		]]>
+  		
+	</select>
+
+	<resultMap type="Tour" id="TourMap">
+		<id column="tour_id" property="tourId" />
+		<result column="tour_name" property="tourName" />
+		<result column="tour_mapx" property="tourMapx"/>
+		<result column="tour_mapy" property="tourMapy"/>
+		<result column="tour_con" property="tourCon"/>
+		<result column="area_id" property="areaId" />
+		<result column="area_name" property="areaName" />
+		<result column="city_id" property="cityId" />
+		<result column="city_name" property="cityName" />
+
+		
+		
+		<collection property="tourImages" column="tour_id" ofType="TourImage" javaType="ArrayList">
+			<id column="tour_image_id" property="tourImageId" />
+			<result column="filename" property="filename" />
+			<result column="tour_id" property="tourId" />
+		</collection>
+	</resultMap>
+
+	<select id="item" resultMap="TourMap">
+		SELECT tour.*,
+		tour_image.tour_image_id, 
+		tour_image.filename, 
+		tour_image.tour_id tour_id FROM tour
+		LEFT JOIN tour_image 
+		ON tour.tour_id=tour_image.tour_id
+		WHERE tour.tour_id=#{tourId} 
+	</select>
+	
+	<select id="nameitem" resultType="Tour">
+		SELECT tour.*, area.area_name, city.city_name
+		FROM tour, area, city
+		WHERE tour.tour_id=#{tourId} AND tour.area_id = area.area_id AND tour.city_id = city.city_id
+	</select>
+
+	
+	<insert id="add">
+		INSERT INTO tour (TOUR_ID, TOUR_NAME, TOUR_MAPX, TOUR_MAPY, TOUR_CON, AREA_ID, CITY_ID)
+		VALUES (TOUR_SEQ.nextval, #{tourName}, #{tourMapx}, #{tourMapy}, #{tourCon}, #{areaId}, #{cityId})
+		
+		<selectKey keyColumn="tour_id" keyProperty="tourId" order="AFTER" resultType="Integer">
+			SELECT TOUR_SEQ.currval FROM DUAL
+		</selectKey>
+	</insert>
+
+	<update id="update">
+		UPDATE tour
+		SET tour_name= #{tourName}, tour_mapx=#{tourMapx}, tour_mapy=#{tourMapy}, tour_con=#{tourCon}, area_id=#{areaId}, city_id=#{cityId}
+		WHERE tour_id=#{tourId}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM tour
+		WHERE tour_id=#{tourId}
+	</delete>
+
+
+</mapper>

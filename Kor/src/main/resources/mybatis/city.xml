@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="city">
+
+	<sql id = "search">
+		SELECT city.*,  area.area_name
+		FROM city
+		LEFT JOIN area
+		ON city.area_id = area.area_id
+		 
+		<!-- SELECT city.*,  area.area_name
+		FROM city 
+		JOIN area using(area_id) -->
+		  
+		<!-- SELECT city.*, area.area_name
+		FROM city, area
+		where city.area_id = area.area_id -->
+
+		<where>
+			<if test="search == 1">
+				city_name LIKE CONCAT(CONCAT('%', #{keyword}), '%')
+			</if>
+			
+		</where>
+		ORDER BY city_id ASC
+		
+	</sql>
+	
+	 <select id="total" resultType="Integer">
+  		SELECT COUNT(*)
+  		FROM (<include refid="search"></include>)
+  	</select>
+
+
+
+	<select id="list" resultType="City">
+		SELECT * FROM 
+  			(SELECT ROWNUM rnum, sub.* FROM
+	           	(<include refid="search"></include>) sub)
+	    <![CDATA[       	
+	    WHERE rnum >= ((#{page} - 1) * #{perPage} + 1) AND rnum <= (#{page} * #{perPage})
+  		]]>
+	</select>
+	<!--
+	<select id="list" resultType="City">
+		SELECT city.*, area.area_name
+		FROM city, area
+		where city.area_id = area.area_id
+
+	</select> -->
+
+	<select id="item" resultType="City">
+		SELECT * FROM city
+		WHERE
+		city_id=#{cityId}
+	</select>
+
+	<insert id="add">
+		INSERT INTO city
+		VALUES (CITY_SEQ.nextval, #{cityName}, #{areaId})
+	</insert>
+
+	<update id="update">
+		UPDATE city
+		SET city_name=#{cityName},
+		area_id=#{areaId}
+		WHERE city_id=#{cityId}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM city
+		WHERE city_id=#{cityId}
+	</delete>
+</mapper>

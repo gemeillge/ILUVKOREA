@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="tour_image">
+
+	<insert id="add">
+		INSERT INTO tour_image
+		VALUES (TOUR_IMAGE_SEQ.nextval, #{filename}, #{tourId})
+		
+		<selectKey keyProperty="tourImageId" order="AFTER" resultType="Integer">
+			SELECT TOUR_IMAGE_SEQ.currval FROM dual
+		</selectKey>		
+	</insert>
+	
+	<delete id="deleteByTourId">
+		DELETE tour_image
+		WHERE tour_id=#{tourId}
+	</delete>
+	
+	<delete id="delete">
+		DELETE tour_image
+		WHERE tour_id=#{tourId} AND tour_image_id=#{tourImageId}
+	</delete>
+		
+
+
+</mapper>
